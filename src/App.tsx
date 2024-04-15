@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -19,44 +18,64 @@ import {
   CardHeader,
   CardTitle,
 } from "./components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, Moon, Sun } from "lucide-react";
 import { useConfig } from "./components/config-provider";
-import { S3Client } from "./lib/buckets";
+import { invoke } from "@tauri-apps/api/tauri";
+import { useTheme } from "./components/theme-provider";
+import { toast } from "sonner";
 
 export const onboardingSchema = z.object({
-  cloudflare_account_id: z.string().min(1),
-  cloudflare_access_key_id: z.string().min(1),
-  cloudflare_secret_access_key: z.string().min(1),
+  account_id: z.string().min(1),
+  access_key_id: z.string().min(1),
+  secret_access_key: z.string().min(1),
 });
 export type OnboardingSchema = z.infer<typeof onboardingSchema>;
 
 function App() {
+  const { theme, setTheme } = useTheme();
   const form = useForm<OnboardingSchema>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
-      cloudflare_access_key_id: "",
-      cloudflare_account_id: "",
-      cloudflare_secret_access_key: "",
+      access_key_id: "a2b9380d956ecbc7d56ebfcbd1733a45",
+      account_id: "fe1917b0950cdb788d0db863c3ab4e3c",
+      secret_access_key:
+        "91ed159808bc8d7f3818fc9ab25eacf0c167f9b69247f559d385d29e1604a74e",
     },
     mode: "all",
   });
   const { config, setConfig } = useConfig();
 
   async function onSubmit(data: OnboardingSchema) {
-    const client = new S3Client(
-      data.cloudflare_access_key_id,
-      data.cloudflare_secret_access_key
-    );
-    const info = await client.s3_fetch(
-      `https://${data.cloudflare_account_id}.r2.cloudflarestorage.com`
-    );
-    console.log(info);
-    // setConfig(data);
+    invoke("init_client", {
+      accountId: data.account_id,
+      accessKeyId: data.access_key_id,
+      secretAccessKey: data.secret_access_key,
+    })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then((res: any) => {
+        if (res.message) {
+          setConfig(data);
+          toast.success(res.message, {
+            description: "Now you can start uploading files.",
+          });
+        }
+      })
+      .catch((e) => console.error(e));
   }
   return (
     <>
+      <div className="fixed top-5 right-5">
+        <Button
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          variant="ghost"
+          size="icon"
+        >
+          <Sun className="dark:hidden" />
+          <Moon className="hidden dark:block" />
+        </Button>
+      </div>
       {!config ? (
-        <div className="flex items-center justify-center min-h-screen w-full">
+        <div className="py-4 flex items-center justify-center min-h-screen w-full">
           <Card className="transition-[height] max-h-fit min-w-96 animate-in zoom-in-95 duration-500">
             <CardHeader>
               <CardTitle>Onboarding</CardTitle>
@@ -73,7 +92,7 @@ function App() {
                 >
                   <FormField
                     control={form.control}
-                    name="cloudflare_account_id"
+                    name="account_id"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Cloudflare Account ID</FormLabel>
@@ -90,7 +109,7 @@ function App() {
                   />
                   <FormField
                     control={form.control}
-                    name="cloudflare_access_key_id"
+                    name="access_key_id"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>R2 Access Key ID</FormLabel>
@@ -108,7 +127,7 @@ function App() {
                   />
                   <FormField
                     control={form.control}
-                    name="cloudflare_secret_access_key"
+                    name="secret_access_key"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>R2 Secret Access Key</FormLabel>

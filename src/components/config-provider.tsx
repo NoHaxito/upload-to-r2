@@ -1,9 +1,9 @@
 import { createContext, useContext, useState } from "react";
 
 type Config = {
-  cloudflare_account_id: null | null;
-  cloudflare_access_key_id: string | null;
-  cloudflare_secret_access_key: string | null;
+  account_id: string | null;
+  access_key_id: string | null;
+  secret_access_key: string | null;
 };
 
 type ConfigProviderProps = {
@@ -11,15 +11,15 @@ type ConfigProviderProps = {
 };
 
 type ConfigProviderState = {
-  config: Config;
-  setConfig: (config: Config) => void;
+  config: Config | null;
+  setConfig: (config: Config | null) => void;
 };
 
 const initialState: ConfigProviderState = {
   config: {
-    cloudflare_account_id: null,
-    cloudflare_access_key_id: null,
-    cloudflare_secret_access_key: null,
+    account_id: null,
+    access_key_id: null,
+    secret_access_key: null,
   },
   setConfig: () => null,
 };
@@ -27,14 +27,19 @@ const initialState: ConfigProviderState = {
 const ConfigProviderContext = createContext<ConfigProviderState>(initialState);
 
 export function ConfigProvider({ children, ...props }: ConfigProviderProps) {
-  const [config, setConfig] = useState<Config>(
+  const [config, setConfig] = useState<Config | null>(
     // @ts-expect-error Null is required to avoid errors.
     () => JSON.parse(localStorage.getItem("app-configuration")) as Config
   );
 
   const value = {
     config,
-    setConfig: (config: Config) => {
+    setConfig: (config: Config | null) => {
+      if (config === null) {
+        localStorage.removeItem("app-configuration");
+        setConfig(null);
+        return;
+      }
       localStorage.setItem("app-configuration", JSON.stringify(config));
       setConfig(config);
     },

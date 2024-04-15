@@ -6,7 +6,7 @@ tasks:
     init: cd src-tauri && cargo build
     command: |
       pnpm install -D @tauri-apps/cli
-      pnpx tauri dev
+      pnpm tauri dev
 
 ports:
   - name: noVNC Client
