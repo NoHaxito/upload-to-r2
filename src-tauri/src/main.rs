@@ -4,10 +4,11 @@
 use aws_config::Region;
 use aws_credential_types::Credentials;
 use aws_sdk_s3::{Client, Config};
+use serde::Serialize;
 use std::sync::Mutex;
 use tauri::State;
 
-#[derive(serde::Serialize)]
+#[derive(Serialize)]
 struct CustomResponse {
     message: String,
 }
@@ -35,10 +36,22 @@ fn init_client(
     })
 }
 
+#[tauri::command]
+async fn list_buckets(client: tauri::State<S3Client>) -> Result<CustomResponse, Error> {
+    let client_ref = {
+        let client_guard = client.0.lock().unwrap();
+        client_guard.as_ref().unwrap() // Ensure the client reference lives long enough
+    };
+    let resp = client_ref.list_buckets().send().await?;
+    Ok(CustomResponse {
+        // message: format!("{:#?}", resp),
+        message: "Success".to_string(),
+    })
+}
 fn main() {
     tauri::Builder::default()
         .manage(S3Client(Mutex::new(None)))
-        .invoke_handler(tauri::generate_handler![init_client])
+        .invoke_handler(tauri::generate_handler![init_client, list_buckets])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

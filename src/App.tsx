@@ -11,6 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+
 import {
   Card,
   CardContent,
@@ -23,7 +24,9 @@ import { useConfig } from "./components/config-provider";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useTheme } from "./components/theme-provider";
 import { toast } from "sonner";
+import { BucketsView } from "./components/views/buckets";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const onboardingSchema = z.object({
   account_id: z.string().min(1),
   access_key_id: z.string().min(1),
@@ -155,11 +158,12 @@ function App() {
           </Card>
         </div>
       ) : (
-        <div className="flex flex-col gap-y-2 items-center justify-center flex-1">
-          <Button>Click me</Button>
+        <div className="px-16 py-10">
+          <BucketsView />
+          {/* <Button>Click me</Button>
           <Button variant="ghost" onClick={() => setConfig(null)}>
             Clear configuration
-          </Button>
+          </Button> */}
         </div>
       )}
     </>
