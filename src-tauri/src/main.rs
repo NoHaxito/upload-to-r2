@@ -3,7 +3,7 @@
 
 use aws_config::Region;
 use aws_credential_types::Credentials;
-use aws_sdk_s3::{types::Error, Client, Config};
+use aws_sdk_s3::{Client, Config};
 use serde::Serialize;
 use std::sync::Mutex;
 use tauri::State;
@@ -37,15 +37,15 @@ fn init_client(
 }
 
 #[tauri::command]
-async fn list_buckets(client: tauri::State<'_, S3Client>) -> Result<CustomResponse, Error> {
+async fn list_buckets(client: tauri::State<'_, S3Client>) -> Result<CustomResponse, String> {
     let client_ref = {
         let client_guard = client.0.lock().unwrap();
         client_guard.as_ref().unwrap() // Ensure the client reference lives long enough
     };
-    let resp = client_ref.list_buckets().send().await?;
+    let resp = client_ref.list_buckets().send().await;
     Ok(CustomResponse {
-        // message: format!("{:#?}", resp),
-        message: "Success".to_string(),
+        message: format!("{:#?}", resp),
+        // message: "Success".to_string(),
     })
 }
 fn main() {
