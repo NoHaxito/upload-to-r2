@@ -3,7 +3,7 @@
 
 use aws_config::Region;
 use aws_credential_types::Credentials;
-use aws_sdk_s3::{operation::list_buckets::ListBucketsOutput, Client, Config};
+use aws_sdk_s3::{Client, Config};
 use serde::Serialize;
 use std::sync::Mutex;
 use tauri::State;
@@ -42,7 +42,7 @@ async fn init_client(
     let resp = s3_client.list_buckets().send().await;
 
     match resp {
-        Ok(response) => {
+        Ok(_response) => {
             let mut client = client.0.lock().unwrap();
             *client = Some(s3_client);
             Ok(CustomResponse {
@@ -76,18 +76,14 @@ async fn list_buckets(client: State<'_, S3Client>) -> Result<CustomResponse<Stri
     };
     let resp = client_ref.list_buckets().send().await;
     match resp {
-        Ok(response) => {
-            print!("{:#?}", response.buckets()[0]);
-            Ok(CustomResponse {
-                message: "Success".to_string(),
-                data: Some("{}".to_string()),
-            })
-        }
+        Ok(_response) => Ok(CustomResponse {
+            message: "Success".to_string(),
+            data: Some("{}".to_string()),
+        }),
         Err(err) => {
             let custom_error = CustomError {
                 error: err.to_string(),
             };
-            println!("Error: {:#?}", custom_error.error);
             let serialized_error = serde_json::to_string(&custom_error).unwrap();
             Err(serialized_error)
         }
