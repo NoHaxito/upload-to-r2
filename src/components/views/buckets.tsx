@@ -6,8 +6,17 @@ import {
 } from "@/components/page-header";
 import { Plus } from "lucide-react";
 import { Button } from "../ui/button";
+import { useEffect } from "react";
+import { invoke } from "@tauri-apps/api/tauri";
 
 export function BucketsView() {
+  useEffect(() => {
+    async function getBuckets() {
+      const buckets = await invoke("list_buckets");
+      console.warn(buckets);
+    }
+    getBuckets();
+  }, []);
   return (
     <>
       <PageHeader>

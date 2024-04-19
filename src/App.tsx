@@ -39,10 +39,10 @@ function App() {
   const form = useForm<OnboardingSchema>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
-      access_key_id: "a2b9380d956ecbc7d56ebfcbd1733a45",
       account_id: "fe1917b0950cdb788d0db863c3ab4e3c",
+      access_key_id: "d6364c84fb0d0a0556874f6288a437ce",
       secret_access_key:
-        "91ed159808bc8d7f3818fc9ab25eacf0c167f9b69247f559d385d29e1604a74e",
+        "83342e3d1c2a239d4ac919c442ffe82332f66f8941bfdb06ddb9cfff5aaeb13e",
     },
     mode: "all",
   });
@@ -160,6 +160,9 @@ function App() {
       ) : (
         <div className="px-16 py-10">
           <BucketsView />
+          <Button variant="ghost" onClick={() => setConfig(null)}>
+            Clear configuration
+          </Button>
           {/* <Button>Click me</Button>
           <Button variant="ghost" onClick={() => setConfig(null)}>
             Clear configuration
