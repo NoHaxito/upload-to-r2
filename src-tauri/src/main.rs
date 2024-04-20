@@ -4,7 +4,10 @@
 use aws_config::Region;
 use aws_credential_types::Credentials;
 use aws_sdk_s3::{Client, Config};
-use serde::Serialize;
+use serde::{
+    ser::{SerializeStruct, Serializer},
+    Serialize,
+};
 use std::sync::Mutex;
 use tauri::State;
 
@@ -17,8 +20,20 @@ struct CustomResponse<T> {
 struct CustomError {
     error: String,
 }
-
 pub struct S3Client(pub Mutex<Option<Client>>);
+
+pub struct BucketWrapper(aws_sdk_s3::types::Bucket);
+impl Serialize for BucketWrapper {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("BucketWapper", 2)?;
+        s.serialize_field("name", &self.0.name)?;
+        s.serialize_field("creation_date", &self.0.creation_date.unwrap().to_string())?;
+        s.end()
+    }
+}
 
 #[tauri::command]
 async fn init_client(
@@ -62,7 +77,9 @@ async fn init_client(
 }
 
 #[tauri::command]
-async fn list_buckets(client: State<'_, S3Client>) -> Result<CustomResponse<String>, String> {
+async fn list_buckets(
+    client: State<'_, S3Client>,
+) -> Result<CustomResponse<Vec<BucketWrapper>>, String> {
     let client_ref = match client.0.lock() {
         Ok(client_guard) => match client_guard.clone() {
             Some(client) => client,
@@ -76,10 +93,17 @@ async fn list_buckets(client: State<'_, S3Client>) -> Result<CustomResponse<Stri
     };
     let resp = client_ref.list_buckets().send().await;
     match resp {
-        Ok(_response) => Ok(CustomResponse {
-            message: "Success".to_string(),
-            data: Some("{}".to_string()),
-        }),
+        Ok(response) => {
+            let buckets: Vec<BucketWrapper> = response
+                .buckets()
+                .into_iter()
+                .map(move |bucket| BucketWrapper(bucket.clone()))
+                .collect();
+            Ok(CustomResponse {
+                message: "Success".to_string(),
+                data: Some(buckets),
+            })
+        }
         Err(err) => {
             let custom_error = CustomError {
                 error: err.to_string(),

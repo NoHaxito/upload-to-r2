@@ -158,7 +158,7 @@ function App() {
           </Card>
         </div>
       ) : (
-        <div className="px-16 py-10">
+        <div className="px-16 space-y-4 py-10">
           <BucketsView />
           <Button variant="ghost" onClick={() => setConfig(null)}>
             Clear configuration
